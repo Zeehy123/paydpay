@@ -4,92 +4,17 @@ import {
   Download,
   ArrowUp,
   ArrowUpDown,
-  MoreHorizontal,
   ChevronLeft,
   ChevronRight,
-  ToggleLeft,
-  ToggleRight,
+  Filter,
+  X,
 } from "lucide-react";
+import { UserRow, UserCard } from "./UsersRow";
 import { usersData } from "../data/users";
 
 const ROLES = ["All", "Admin", "Manager", "User"];
 const STATUSES = ["All", "Active", "Inactive", "Suspended"];
 const PER_PAGE = 5;
-
-const avatarColors = {
-  A: "bg-[#1a3a5c] text-[#00d4ff]",
-  B: "bg-[#2a1a4a] text-[#a78bfa]",
-  D: "bg-[#1a3a5c] text-[#00d4ff]",
-  J: "bg-[#2a3a1a] text-[#00e87a]",
-  K: "bg-[#3a1a1a] text-[#ff6b6b]",
-  M: "bg-[#1a3a5c] text-[#00d4ff]",
-  P: "bg-[#1a3a5c] text-[#00d4ff]",
-  S: "bg-[#2a1a4a] text-[#a78bfa]",
-  Y: "bg-[#1a2a3a] text-[#60a5fa]",
-  Z: "bg-[#3a1a2a] text-[#ff6b6b]",
-  L: "bg-[#1a3a2a] text-[#00e87a]",
-  N: "bg-[#2a2a1a] text-[#f5a623]",
-};
-
-function initials(name) {
-  return name
-    .split(" ")
-    .map((n) => n[0])
-    .join("")
-    .slice(0, 2)
-    .toUpperCase();
-}
-
-function avatarClass(name) {
-  const first = name[0].toUpperCase();
-  return avatarColors[first] || "bg-[#1a2d3a] text-[#7a9ab0]";
-}
-
-function RoleBadge({ role }) {
-  const styles = {
-    Admin: "border border-[#00d4ff60] text-[#00d4ff]   bg-[#00d4ff10]",
-    Manager: "border border-[#a78bfa60] text-[#a78bfa]   bg-[#a78bfa10]",
-    User: "border border-[#4a6a8060] text-[#4a6a80]   bg-transparent",
-  };
-  return (
-    <span
-      className={`text-xs font-semibold px-2.5 py-0.5 rounded ${styles[role] || styles.User}`}
-    >
-      {role}
-    </span>
-  );
-}
-
-function StatusBadge({ status }) {
-  const styles = {
-    Active: "border border-[#00e87a60] text-[#00e87a] bg-[#00e87a10]",
-    Inactive: "border border-[#4a6a8060] text-[#4a6a80] bg-transparent",
-    Suspended: "border border-[#ff6b6b60] text-[#ff6b6b] bg-[#ff6b6b10]",
-    Pending: "border border-[#f5a62360] text-[#f5a623] bg-[#f5a62310]",
-  };
-  return (
-    <span
-      className={`text-xs font-semibold px-2.5 py-0.5 rounded ${styles[status] || ""}`}
-    >
-      {status}
-    </span>
-  );
-}
-
-function KycBadge({ kyc }) {
-  const styles = {
-    Verified: "border border-[#00e87a60] text-[#00e87a] bg-[#00e87a10]",
-    Failed: "border border-[#ff6b6b60] text-[#ff6b6b] bg-[#ff6b6b10]",
-    Pending: "border border-[#f5a62360] text-[#f5a623] bg-[#f5a62310]",
-  };
-  return (
-    <span
-      className={`text-xs font-semibold px-2.5 py-0.5 rounded ${styles[kyc] || ""}`}
-    >
-      {kyc}
-    </span>
-  );
-}
 
 function SortIcon({ active, dir }) {
   if (active)
@@ -102,6 +27,19 @@ function SortIcon({ active, dir }) {
   return <ArrowUpDown size={11} className="inline ml-1 opacity-30" />;
 }
 
+function Th({ label, sortable, k, sortKey, sortDir, onSort }) {
+  return (
+    <th
+      onClick={sortable ? () => onSort(k) : undefined}
+      className={`px-3 py-3 text-left text-[10px] font-semibold tracking-widest uppercase text-[#4a6a80] whitespace-nowrap
+        ${sortable ? "cursor-pointer select-none hover:text-[#7a9ab0]" : ""}`}
+    >
+      {label}
+      {sortable && <SortIcon active={sortKey === k} dir={sortDir} />}
+    </th>
+  );
+}
+
 export default function UsersTable() {
   const [search, setSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState("All");
@@ -111,6 +49,7 @@ export default function UsersTable() {
   const [sortDir, setSortDir] = useState("asc");
   const [page, setPage] = useState(1);
   const [users, setUsers] = useState(usersData);
+  const [filterOpen, setFilterOpen] = useState(false);
 
   const filtered = useMemo(() => {
     let d = [...users];
@@ -141,14 +80,12 @@ export default function UsersTable() {
     }
     setPage(1);
   };
-
   const toggleRow = (id) =>
     setSelected((s) =>
       s.includes(id) ? s.filter((x) => x !== id) : [...s, id],
     );
   const toggleAll = () =>
     setSelected((s) => (s.length === rows.length ? [] : rows.map((r) => r.id)));
-
   const toggleStatus = (id) =>
     setUsers((prev) =>
       prev.map((u) =>
@@ -158,76 +95,106 @@ export default function UsersTable() {
       ),
     );
 
-  const Th = ({ label, sortable, k, className = "" }) => (
-    <th
-      onClick={sortable ? () => toggleSort(k) : undefined}
-      className={`px-3 py-3 text-left text-[10px] font-semibold tracking-widest uppercase text-[#4a6a80] whitespace-nowrap ${sortable ? "cursor-pointer select-none hover:text-[#7a9ab0]" : ""} ${className}`}
-    >
-      {label}
-      {sortable && <SortIcon active={sortKey === k} dir={sortDir} />}
-    </th>
+  const allChecked = selected.length === rows.length && rows.length > 0;
+
+  const FilterControls = () => (
+    <>
+      <select
+        value={statFilter}
+        onChange={(e) => {
+          setStatFilter(e.target.value);
+          setPage(1);
+        }}
+        className="flex-1 sm:flex-none bg-[#0a1520] border border-[#1a2d40] text-[#7a9ab0] text-sm rounded-lg px-3 py-2 outline-none cursor-pointer"
+      >
+        {STATUSES.map((s) => (
+          <option key={s}>{s}</option>
+        ))}
+      </select>
+      <select
+        value={roleFilter}
+        onChange={(e) => {
+          setRoleFilter(e.target.value);
+          setPage(1);
+        }}
+        className="flex-1 sm:flex-none bg-[#0a1520] border border-[#1a2d40] text-[#7a9ab0] text-sm rounded-lg px-3 py-2 outline-none cursor-pointer"
+      >
+        {ROLES.map((r) => (
+          <option key={r}>{r}</option>
+        ))}
+      </select>
+      <button className="flex items-center gap-2 bg-[#0a1520] border border-[#1a2d40] text-[#7a9ab0] text-sm rounded-lg px-3 py-2 hover:text-white hover:border-[#2a4a60] transition-colors">
+        <Download size={13} /> Export
+      </button>
+    </>
   );
 
   return (
-    <div className="bg-[#0a1520] min-h-screen p-6 font-sans">
+    <div className="font-sans">
       <div className="bg-[#0d1b2a] border border-[#1a2d40] rounded-2xl overflow-hidden">
-        {/* Toolbar */}
-        <div className="flex items-center gap-3 p-4 border-b border-[#1a2d40]">
-          <div className="flex items-center gap-2 bg-[#0a1520] border border-[#1a2d40] rounded-lg px-3 py-2 flex-1 max-w-md">
-            <Search size={13} className="text-[#4a6a80] flex-shrink-0" />
-            <input
-              value={search}
-              onChange={(e) => {
-                setSearch(e.target.value);
-                setPage(1);
-              }}
-              placeholder="Search users..."
-              className="bg-transparent outline-none text-white text-sm placeholder-[#4a6a80] w-full"
-            />
+        {/* ── Toolbar ─────────────────────────────────────────────── */}
+        <div className="p-3 sm:p-4 border-b border-[#1a2d40] space-y-2">
+          <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 bg-[#0a1520] border border-[#1a2d40] rounded-lg px-3 py-2 flex-1">
+              <Search size={13} className="text-[#4a6a80] flex-shrink-0" />
+              <input
+                value={search}
+                onChange={(e) => {
+                  setSearch(e.target.value);
+                  setPage(1);
+                }}
+                placeholder="Search users..."
+                className="bg-transparent outline-none text-white text-sm placeholder-[#4a6a80] w-full min-w-0"
+              />
+            </div>
+
+            {/* Mobile filter toggle button */}
+            <button
+              onClick={() => setFilterOpen(!filterOpen)}
+              className="sm:hidden w-9 h-9 flex items-center justify-center rounded-lg bg-[#0a1520] border border-[#1a2d40] text-[#7a9ab0] hover:text-white transition flex-shrink-0"
+            >
+              {filterOpen ? <X size={14} /> : <Filter size={14} />}
+            </button>
+
+            {/* Desktop filters */}
+            <div className="hidden sm:flex items-center gap-2">
+              <FilterControls />
+            </div>
           </div>
 
-          <div className="ml-auto flex items-center gap-2">
-            <select
-              value={statFilter}
-              onChange={(e) => {
-                setStatFilter(e.target.value);
-                setPage(1);
-              }}
-              className="bg-[#0a1520] border border-[#1a2d40] text-[#7a9ab0] text-sm rounded-lg px-3 py-2 outline-none cursor-pointer"
-            >
-              {STATUSES.map((s) => (
-                <option key={s}>{s}</option>
-              ))}
-            </select>
-            <select
-              value={roleFilter}
-              onChange={(e) => {
-                setRoleFilter(e.target.value);
-                setPage(1);
-              }}
-              className="bg-[#0a1520] border border-[#1a2d40] text-[#7a9ab0] text-sm rounded-lg px-3 py-2 outline-none cursor-pointer"
-            >
-              {ROLES.map((r) => (
-                <option key={r}>{r}</option>
-              ))}
-            </select>
-            <button className="flex items-center gap-2 bg-[#0a1520] border border-[#1a2d40] text-[#7a9ab0] text-sm rounded-lg px-3 py-2 hover:text-white hover:border-[#2a4a60] transition-colors">
-              <Download size={13} /> Export
-            </button>
-          </div>
+          {/* Mobile filter drawer */}
+          {filterOpen && (
+            <div className="sm:hidden flex flex-wrap gap-2">
+              <FilterControls />
+            </div>
+          )}
         </div>
 
-        {/* Table */}
-        <div className="overflow-x-auto">
+        {/* ── Mobile: UserCard list ────────────────────────────────── */}
+        <div className="sm:hidden divide-y divide-[#1a2d40]">
+          {rows.map((u) => (
+            <UserCard
+              key={u.id}
+              user={u}
+              checked={selected.includes(u.id)}
+              onSelect={() => toggleRow(u.id)}
+              onToggleStatus={toggleStatus}
+            />
+          ))}
+        </div>
+
+        {/* ── Desktop: UserRow table ───────────────────────────────── */}
+        <div className="hidden sm:block overflow-x-auto">
           <table className="w-full">
             <thead className="bg-[#0a1520]">
               <tr>
                 <th className="px-4 py-3 w-10">
                   <div
                     onClick={toggleAll}
-                    className={`w-4 h-4 rounded border cursor-pointer flex items-center justify-center transition-colors ${selected.length === rows.length && rows.length > 0 ? "bg-[#00d4aa] border-[#00d4aa]" : "border-[#2a4a60] bg-transparent"}`}
+                    className={`w-4 h-4 rounded border cursor-pointer flex items-center justify-center transition-colors
+                      ${allChecked ? "bg-[#00d4aa] border-[#00d4aa]" : "border-[#2a4a60] bg-transparent"}`}
                   >
-                    {selected.length === rows.length && rows.length > 0 && (
+                    {allChecked && (
                       <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
                         <path
                           d="M1 4L3.5 6.5L9 1"
@@ -240,113 +207,57 @@ export default function UsersTable() {
                     )}
                   </div>
                 </th>
-                <Th label="Name ↑" sortable k="name" />
-                <Th label="Role" sortable k="role" />
-                <Th label="Status" sortable k="status" />
-                <Th label="KYC" sortable k="kyc" />
-                <Th label="Txns" sortable k="txns" />
-                <Th label="Balance" sortable k="balance" />
-                <Th label="Joined" sortable k="joined" />
-                <Th label="Actions" />
+                {[
+                  { label: "Name", k: "name" },
+                  { label: "Role", k: "role" },
+                  { label: "Status", k: "status" },
+                  { label: "KYC", k: "kyc" },
+                  { label: "Txns", k: "txns" },
+                  { label: "Balance", k: "balance" },
+                  { label: "Joined", k: "joined" },
+                ].map(({ label, k }) => (
+                  <Th
+                    key={k}
+                    label={label}
+                    sortable
+                    k={k}
+                    sortKey={sortKey}
+                    sortDir={sortDir}
+                    onSort={toggleSort}
+                  />
+                ))}
+                <Th
+                  label="Actions"
+                  sortKey={sortKey}
+                  sortDir={sortDir}
+                  onSort={toggleSort}
+                />
               </tr>
             </thead>
             <tbody>
-              {rows.map((u, i) => {
-                const checked = selected.includes(u.id);
-                return (
-                  <tr
-                    key={u.id}
-                    className={`border-t border-[#1a2d40] transition-colors ${checked ? "bg-[#00d4aa08]" : i % 2 === 0 ? "bg-transparent" : "bg-[#ffffff03]"} hover:bg-[#1a2d4040]`}
-                  >
-                    <td className="px-4 py-3.5">
-                      <div
-                        onClick={() => toggleRow(u.id)}
-                        className={`w-4 h-4 rounded border cursor-pointer flex items-center justify-center transition-colors ${checked ? "bg-[#00d4aa] border-[#00d4aa]" : "border-[#2a4a60]"}`}
-                      >
-                        {checked && (
-                          <svg
-                            width="10"
-                            height="8"
-                            viewBox="0 0 10 8"
-                            fill="none"
-                          >
-                            <path
-                              d="M1 4L3.5 6.5L9 1"
-                              stroke="#000"
-                              strokeWidth="1.5"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                            />
-                          </svg>
-                        )}
-                      </div>
-                    </td>
-                    <td className="px-3 py-3.5">
-                      <div className="flex items-center gap-3">
-                        <div
-                          className={`w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold flex-shrink-0 ${avatarClass(u.name)}`}
-                        >
-                          {initials(u.name)}
-                        </div>
-                        <div>
-                          <div className="text-white text-sm font-semibold leading-tight">
-                            {u.name}
-                          </div>
-                          <div className="text-[#4a6a80] text-xs mt-0.5">
-                            {u.email}
-                          </div>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-3 py-3.5">
-                      <RoleBadge role={u.role} />
-                    </td>
-                    <td className="px-3 py-3.5">
-                      <StatusBadge status={u.status} />
-                    </td>
-                    <td className="px-3 py-3.5">
-                      <KycBadge kyc={u.kyc} />
-                    </td>
-                    <td className="px-3 py-3.5 text-[#7a9ab0] text-sm font-mono">
-                      {u.txns}
-                    </td>
-                    <td className="px-3 py-3.5 text-[#00e87a] text-sm font-mono font-semibold">
-                      {u.balance}
-                    </td>
-                    <td className="px-3 py-3.5 text-[#4a6a80] text-sm font-mono">
-                      {u.joined}
-                    </td>
-                    <td className="px-3 py-3.5">
-                      <div className="flex items-center gap-2">
-                        <button
-                          onClick={() => toggleStatus(u.id)}
-                          className="transition-colors"
-                          title={u.status === "Active" ? "Suspend" : "Activate"}
-                        >
-                          {u.status === "Active" ? (
-                            <ToggleRight size={20} className="text-[#00d4aa]" />
-                          ) : (
-                            <ToggleLeft size={20} className="text-[#2a4a60]" />
-                          )}
-                        </button>
-                        <button className="text-[#4a6a80] hover:text-white transition-colors">
-                          <MoreHorizontal size={15} />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })}
+              {rows.map((u) => (
+                <UserRow
+                  key={u.id}
+                  user={u}
+                  checked={selected.includes(u.id)}
+                  onSelect={() => toggleRow(u.id)}
+                  onToggleStatus={toggleStatus}
+                />
+              ))}
             </tbody>
           </table>
         </div>
 
-        {/* Footer */}
-        <div className="flex items-center justify-between px-4 py-3 border-t border-[#1a2d40]">
-          <span className="text-[#4a6a80] text-xs">
-            Showing {Math.min((page - 1) * PER_PAGE + 1, filtered.length)}–
-            {Math.min(page * PER_PAGE, filtered.length)} of {filtered.length}{" "}
-            users
+        {/* ── Pagination ───────────────────────────────────────────── */}
+        <div className="flex items-center justify-between px-3 sm:px-4 py-3 border-t border-[#1a2d40] gap-2">
+          <span className="text-[#4a6a80] text-xs flex-shrink-0">
+            <span className="hidden sm:inline">Showing </span>
+            {Math.min((page - 1) * PER_PAGE + 1, filtered.length)}–
+            {Math.min(page * PER_PAGE, filtered.length)}
+            <span className="hidden sm:inline">
+              {" "}
+              of {filtered.length} users
+            </span>
           </span>
           <div className="flex items-center gap-1">
             <button
@@ -360,7 +271,8 @@ export default function UsersTable() {
               <button
                 key={p}
                 onClick={() => setPage(p)}
-                className={`w-7 h-7 flex items-center justify-center rounded border text-xs font-semibold transition-colors ${p === page ? "bg-[#00d4aa] border-[#00d4aa] text-black" : "border-[#1a2d40] text-[#4a6a80] hover:text-white hover:border-[#2a4a60]"}`}
+                className={`w-7 h-7 flex items-center justify-center rounded border text-xs font-semibold transition-colors
+                  ${p === page ? "bg-[#00d4aa] border-[#00d4aa] text-black" : "border-[#1a2d40] text-[#4a6a80] hover:text-white hover:border-[#2a4a60]"}`}
               >
                 {p}
               </button>

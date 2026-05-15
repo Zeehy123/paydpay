@@ -6,7 +6,6 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  Legend,
 } from "recharts";
 
 const data = [
@@ -24,112 +23,60 @@ const data = [
   { month: "Dec", revenue: 148000, profit: 85000 },
 ];
 
-const formatYAxis = (value) => `$${value / 1000}k`;
+const formatYAxis = (v) => `$${v / 1000}k`;
 
-const CustomTooltip = ({ active, payload, label }) => {
-  if (active && payload && payload.length) {
-    return (
-      <div
-        style={{
-          background: "#0d1b2a",
-          border: "1px solid #1e3045",
-          borderRadius: 8,
-          padding: "10px 14px",
-        }}
-      >
-        <p style={{ color: "#7a9ab0", fontSize: 12, marginBottom: 6 }}>
-          {label}
-        </p>
-        {payload.map((p) => (
-          <p
-            key={p.dataKey}
-            style={{
-              color: p.stroke,
-              fontSize: 13,
-              fontWeight: 600,
-              margin: "2px 0",
-            }}
-          >
-            {p.name.charAt(0).toUpperCase() + p.name.slice(1)}: $
-            {p.value.toLocaleString()}
-          </p>
-        ))}
-      </div>
-    );
-  }
-  return null;
-};
-
-const CustomLegend = () => (
-  <div
-    style={{
-      display: "flex",
-      gap: 20,
-      justifyContent: "flex-end",
-      marginBottom: 8,
-    }}
-  >
-    {[
-      { color: "#00d4ff", label: "Revenue" },
-      { color: "#00e87a", label: "Profit" },
-    ].map(({ color, label }) => (
-      <div
-        key={label}
-        style={{ display: "flex", alignItems: "center", gap: 6 }}
-      >
-        <div
-          style={{ width: 24, height: 2, background: color, borderRadius: 1 }}
-        />
-        <span style={{ color: "#7a9ab0", fontSize: 12 }}>{label}</span>
-      </div>
-    ))}
-  </div>
-);
-
-export default function RevenueOverview() {
+function CustomTooltip({ active, payload, label }) {
+  if (!active || !payload?.length) return null;
   return (
-    <div
-      style={{
-        background: "#0a1520",
-        border: "1px solid #1a2d40",
-        borderRadius: 14,
-        padding: "20px 24px 12px",
-        width: "100%",
-        maxWidth: 680,
-        fontFamily: "sans-serif",
-      }}
-    >
-      {/* Header */}
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "flex-start",
-          marginBottom: 4,
-        }}
-      >
+    <div className="bg-[#0d1b2a] border border-[#1e3045] rounded-lg px-3 py-2.5 text-xs shadow-xl">
+      <p className="text-[#7a9ab0] mb-1.5">{label}</p>
+      {payload.map((p) => (
+        <p
+          key={p.dataKey}
+          style={{ color: p.stroke }}
+          className="font-semibold"
+        >
+          {p.name.charAt(0).toUpperCase() + p.name.slice(1)}: $
+          {p.value.toLocaleString()}
+        </p>
+      ))}
+    </div>
+  );
+}
+
+function Legend() {
+  return (
+    <div className="flex items-center gap-4">
+      {[
+        { color: "#00d4ff", label: "Revenue" },
+        { color: "#00e87a", label: "Profit" },
+      ].map(({ color, label }) => (
+        <div key={label} className="flex items-center gap-1.5">
+          <div className="w-5 h-0.5 rounded" style={{ background: color }} />
+          <span className="text-[#7a9ab0] text-xs">{label}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+export default function RevenueChart() {
+  return (
+    <div className="bg-[#0a1520] border border-[#1a2d40] rounded-2xl p-4 sm:p-5 w-full">
+      <div className="flex flex-wrap items-start justify-between gap-2 mb-3">
         <div>
-          <h2
-            style={{
-              color: "#ffffff",
-              fontWeight: 700,
-              fontSize: 16,
-              margin: 0,
-            }}
-          >
+          <h2 className="text-white font-bold text-sm sm:text-base">
             Revenue Overview
           </h2>
-          <p style={{ color: "#4a6a80", fontSize: 12, margin: "3px 0 0" }}>
-            2024 Full Year
-          </p>
+          <p className="text-[#4a6a80] text-xs mt-0.5">2024 Full Year</p>
         </div>
-        <CustomLegend />
+        <Legend />
       </div>
 
-      <ResponsiveContainer width="100%" height={220}>
+      <ResponsiveContainer width="100%" height={200}>
         <AreaChart
           data={data}
-          margin={{ top: 10, right: 4, left: -4, bottom: 0 }}
+          margin={{ top: 10, right: 4, left: -10, bottom: 0 }}
         >
           <defs>
             <linearGradient id="gradRevenue" x1="0" y1="0" x2="0" y2="1">
@@ -141,36 +88,26 @@ export default function RevenueOverview() {
               <stop offset="100%" stopColor="#00e87a" stopOpacity={0.02} />
             </linearGradient>
           </defs>
-
-          <CartesianGrid
-            strokeDasharray="3 3"
-            stroke="#1a2d40"
-            vertical={true}
-          />
-
+          <CartesianGrid strokeDasharray="3 3" stroke="#1a2d40" />
           <XAxis
             dataKey="month"
-            tick={{ fill: "#4a6a80", fontSize: 12 }}
-            axisLine={false}
-            tickLine={false}
-            tickMargin={10}
-          />
-
-          <YAxis
-            tickFormatter={formatYAxis}
             tick={{ fill: "#4a6a80", fontSize: 11 }}
             axisLine={false}
             tickLine={false}
-            tickMargin={6}
-            domain={[20000, 160000]}
-            ticks={[40000, 60000, 80000, 100000, 120000, 140000, 160000]}
+            tickMargin={8}
           />
-
+          <YAxis
+            tickFormatter={formatYAxis}
+            tick={{ fill: "#4a6a80", fontSize: 10 }}
+            axisLine={false}
+            tickLine={false}
+            domain={[20000, 160000]}
+            ticks={[40000, 80000, 120000, 160000]}
+          />
           <Tooltip
             content={<CustomTooltip />}
             cursor={{ stroke: "#2a4060", strokeWidth: 1 }}
           />
-
           <Area
             type="monotone"
             dataKey="revenue"

@@ -22,18 +22,20 @@ function CustomTooltip({ active, payload }) {
 
 export default function TransactionChart() {
   return (
-    <div className="bg-[#0d1b2a] border border-[#1e3045] rounded-2xl p-5 w-64 font-sans">
-      <h3 className="mb-4 text-white font-semibold">Transaction Mix</h3>
-      <p className="text-[#4a6a80] text-xs mt-0.5 mb-2">By category</p>
+    <div className="bg-[#0d1b2a] border border-[#1e3045] rounded-2xl p-4 sm:p-5 w-full">
+      <h3 className="text-white font-semibold text-sm sm:text-base">
+        Transaction Mix
+      </h3>
+      <p className="text-[#4a6a80] text-xs mt-0.5 mb-3">By category</p>
 
-      <ResponsiveContainer width="100%" height={180}>
+      <ResponsiveContainer width="100%" height={160}>
         <PieChart>
           <Pie
             data={data}
             cx="50%"
             cy="50%"
-            innerRadius={55}
-            outerRadius={82}
+            innerRadius={45}
+            outerRadius={70}
             paddingAngle={3}
             dataKey="value"
             startAngle={90}
@@ -47,17 +49,20 @@ export default function TransactionChart() {
           <Tooltip content={<CustomTooltip />} />
         </PieChart>
       </ResponsiveContainer>
-      <div className="flex flex-col gap-2.5 mt-1">
+
+      <div className="flex flex-col gap-2 mt-2">
         {data.map(({ name, value, color }) => (
           <div key={name} className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <span
-                className="w-2.5 h-2.5 rounded-full flex-shrink-0"
+                className="w-2 h-2 rounded-full flex-shrink-0"
                 style={{ backgroundColor: color }}
               />
-              <span className="text-[#b0c8d8] text-sm">{name}</span>
+              <span className="text-[#b0c8d8] text-xs sm:text-sm">{name}</span>
             </div>
-            <span className="text-white text-sm font-bold">{value}%</span>
+            <span className="text-white text-xs sm:text-sm font-bold">
+              {value}%
+            </span>
           </div>
         ))}
       </div>
